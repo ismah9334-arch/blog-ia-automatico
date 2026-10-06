@@ -1,0 +1,42 @@
+name: Motor Autoblog 24/7
+
+on:
+  schedule:
+    - cron: '0 */4 * * *' # Se ejecuta cada 4 horas
+  workflow_dispatch: # Permite ejecución manual
+
+jobs:
+  crear_articulo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Descargar Código
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Instalar Dependencias
+        run: pip install requests google-generativeai
+
+      - name: Ejecutar Inteligencia Artificial (Redacción)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_TOKEN: "8996243065:AAEK4KYPCBDn6davozS6vczEmVbTGSh9sic"
+          TELEGRAM_CHAT_ID: "8780918934"
+        run: python bot.py
+
+      - name: Compilar Web Estática
+        shell: pwsh
+        run: ./build.ps1
+
+      - name: Guardar y Publicar
+        run: |
+          git config --global user.name "Antigravity Cloud"
+          git config --global user.email "bot@antigravity.local"
+          git add .
+          git commit -m "Auto-publicación: Nuevo artículo SEO generado por IA" || echo "Sin cambios"
+          git push
